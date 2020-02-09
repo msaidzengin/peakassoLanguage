@@ -13,9 +13,7 @@ public class PEAKASSO {
         }
 
         try {
-          System.out.println("----------------");
-          System.out.println(args);
-            new PEAKASSO(new java.io.FileInputStream(new java.io.File("deneme.txt"))).PEAKASSO_Language();
+            new PEAKASSO(new java.io.FileInputStream(new java.io.File(args[0]))).PEAKASSO_Language();
         } catch(java.io.IOException e) {
             System.out.println("File not found");
         } catch(ParseException e){
@@ -93,7 +91,6 @@ void PaintStmt() : {String bn; int c_x; int c_y; int b_x; int b_y;} {
     {c_x = Integer.parseInt(map.get("CursorX")[0]);
     c_y = Integer.parseInt(map.get("CursorY")[0]);
     b_x = Integer.parseInt(map.get(bn)[0]); b_y = Integer.parseInt(map.get(bn)[1]);
-    System.out.println("bn: " + bn + " c_x, c_y:" + c_x + " " + c_y + "b_x, b_y: " + b_x + " " + b_y);
     for(int ix = c_x - 1; ix < c_x + b_y - 1; ix++)
         for(int iy = c_y - 1; iy < c_y + b_x - 1; iy++)
             paint[iy][ix] = 1;
@@ -120,16 +117,16 @@ void CursorMoveStmt() : {String c; String e;} {
     if(terms.length==1) { String arr[] = { terms[0] }; map.put(c,arr); }
     else switch(terms[1]) {
         case("PLUS"):
-            int sum = Integer.parseInt(terms[0])+Integer.parseInt(terms[2]);
+            int sum = Integer.parseInt(map.get(terms[0])[0])+Integer.parseInt(terms[2]);
             int size_canvas = dimension == 1 ? paint.length : paint[0].length;
             if(sum > size_canvas) throw new ParseException("Not a valid argument");
             String arr[] = { sum + "" };
             map.put(c, arr);
             break;
         case("MINUS"):
-            sum = Integer.parseInt(terms[0])-Integer.parseInt(terms[2]);
+            sum = Integer.parseInt(map.get(terms[0])[0])-Integer.parseInt(terms[2]);
             size_canvas = dimension == 1 ? paint.length : paint[0].length;
-            if(sum < size_canvas) throw new ParseException("Not a valid argument");
+            if(sum < 0) throw new ParseException("Not a valid argument");
             String arr2[] = { sum + "" };
             map.put(c, arr2);
     }
@@ -140,8 +137,8 @@ String cursor() : {} {
     "CursorX" { return "CursorX"; } | "CursorY" { return "CursorY"; }
 }
 
-String expression() : {String t; String e; String o; String t2;} {
-	t=term() (e=expression() o=operation() t2=term() {return e + " " + o + " " + t2;})*
+String expression() : {String t; String e; String o = ""; String t2;} {
+    t=term()  ( LOOKAHEAD(2) (e=expression() | o=operation()) t2=term() {return t + " " + o + " " + t2;})*
     { return t; }
 
 }
@@ -155,7 +152,7 @@ String term() : {String s;} {
 }
 
 String factor() : {Token token; String c;} {
-    token = < INT_LIT > { return token.image; } | c=cursor() { return map.get(c)[0]; }
+    token = < INT_LIT > { return token.image; } | c=cursor() {return c; }
     | "CanvasX"  { return "CanvasX"; } | "CanvasY" { return "CanvasY"; }
     | "(" c=expression() ")" { return c; }
 }
