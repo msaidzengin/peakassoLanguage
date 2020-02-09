@@ -25,53 +25,65 @@ public class PEAKASSO {
 
 PARSER_END(PEAKASSO)
 
+
+TOKEN :
+ {
+   < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+ |
+   < #LETTER: ["_","a"-"z","A"-"Z"] >
+ |
+   < #DIGIT: ["0"-"9"] >
+ }
+
 SKIP: {
   < " " | "\t" | "\r" | "\n" | "\r\n" >
 | <"!!" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
 }
 
-void PEAKASSO_Language():{}
-{
-    "PROGRAM" <id> ";" CanvasInıtSection() BrushDeclarationSection() DrawingSection()
+void PEAKASSO_Language():{} {
+    "PROGRAM" <id> ";" CanvasInitSection() BrushDeclarationSection() DrawingSection()
 }
 
-void CanvasInıtSection():{}
-{
+void CanvasInitSection():{} {
     "CANVAS-INIT-SECTION" ":" CanvasSizeInit() CursorPosInit()
 }
 
-void CanvasSizeInit():{}
-{
+void CanvasSizeInit():{} {
     //todo
 }
 
-void CursorPosInit():{}
-{
+void CursorPosInit():{} {
     //todo
 }
 
-void BrushDeclarationSection():{}
-{
+void BrushDeclarationSection():{} {
     "BRUSH-DECLARATION-SECTION" ":" (VariableDef())?
 }
 
-void VariableDef():{}
-{
+void VariableDef():{} {
     "BRUSH" BrushList() ";"
 }
 
-void BrushList():{}
-{
+void BrushList():{} {
     BrushName() | BrushName() BrushList()
 }
 
-void DrawingSection():{}
-{
+void DrawingSection():{} {
     "DRAWING-SECTION" ":" (Statement()";")*
 }
 
-void Statement():{}
-{
-    RenewStmt() | PaintStmt() | ExhibitStmt() | CursorMoveStmt()
+void Statement():{} {
+    RenewStmt() | PaintStmt() | ExhibitCanvas() | CursorMoveStmt()
 }
 
+void PaintCanvas(): {} {
+    "PAINT-CANVAS" String()
+}
+
+void ExhibitCanvas(): {} {
+    "EXHIBIT-CANVAS;"
+}
+
+void String() : {} {
+    <IDENTIFIER>
+}
