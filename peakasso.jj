@@ -26,64 +26,128 @@ public class PEAKASSO {
 PARSER_END(PEAKASSO)
 
 
-TOKEN :
- {
-   < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
- |
-   < #LETTER: ["_","a"-"z","A"-"Z"] >
- |
-   < #DIGIT: ["0"-"9"] >
- }
+TOKEN : {
+    < ID: <LETTER> (<LETTER>|<DIGIT>)* >
+    |
+    < #LETTER: ["a"-"z","A"-"Z"] >
+    |
+    < #DIGIT: ["0"-"9"] >
+}
+
+TOKEN : {
+    < INT_LIT: <DECIMAL_LITERAL> | (<SIGN><DECIMAL_LITERAL>) >
+    |
+    < #DECIMAL_LITERAL: (["0"-"9"])*>
+    |
+    < #SIGN: ("+" | "-") >
+}
+
+TOKEN : {
+    < MESSAGE: ["\""] (~["\"","\n","\r"])* ["\""] >
+}
 
 SKIP: {
   < " " | "\t" | "\r" | "\n" | "\r\n" >
-| <"!!" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
+| < "!!" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
 }
 
-void PEAKASSO_Language():{} {
-    "PROGRAM" <id> ";" CanvasInitSection() BrushDeclarationSection() DrawingSection()
+void PEAKASSO_Language() : {} {
+    "PROGRAM" <ID> ";" CanvasInitSection() BrushDeclarationSection() DrawingSection()
 }
 
-void CanvasInitSection():{} {
+void CanvasInitSection() : {} {
     "CANVAS-INIT-SECTION" ":" CanvasSizeInit() CursorPosInit()
 }
 
-void CanvasSizeInit():{} {
-    //todo
+void CanvasSizeInit() : {} {
+    CanvasInitStatement() ";" CanvasInitStatement() ";"
 }
 
-void CursorPosInit():{} {
-    //todo
+void CanvasInitStatement() : {} {
+    Declaration() String() Assignment() Number()
 }
 
-void BrushDeclarationSection():{} {
+void CursorPosInit() : {} {
+    CursorInitStatement() ";" CursorInitStatement() ";"
+}
+
+void CursorInitStatement() : {} {
+    <IDENTIFIER> Assignment() Number() ";"
+}
+
+void BrushDeclarationSection() : {} {
     "BRUSH-DECLARATION-SECTION" ":" (VariableDef())?
 }
 
-void VariableDef():{} {
+void VariableDef() : {} {
     "BRUSH" BrushList() ";"
 }
 
-void BrushList():{} {
+void BrushList() : {} {
     BrushName() | BrushName() BrushList()
 }
 
-void DrawingSection():{} {
+void BrushName() : {} {
+    <ID> [Assignment() Number() Number()]
+}
+
+void DrawingSection() : {} {
     "DRAWING-SECTION" ":" (Statement()";")*
 }
 
-void Statement():{} {
-    RenewStmt() | PaintStmt() | ExhibitCanvas() | CursorMoveStmt()
+void Statement() : {} {
+    RenewStmt() | PaintStmt() | ExhibitStmt() | CursorMoveStmt()
 }
 
-void PaintCanvas(): {} {
-    "PAINT-CANVAS" String()
+void RenewStmt() : {String msg;} {
+    "RENEW-BRUSH" msg=get_message() BrushName()
 }
 
-void ExhibitCanvas(): {} {
-    "EXHIBIT-CANVAS;"
+void PaintStmt() : {} {
+    "PAINT-CANVAS" BrushName()
+}
+
+void ExhibitStmt() : {} {
+    "EXHIBIT-CANVAS"
+}
+
+void CursorMoveStmt() : {} {
+    "MOVE" cursor() "TO" expression()
+}
+
+void cursor() : {} {
+    "CursorX" | "CursorY"
+}
+
+void expression() : {} {
+    term() | expression() ("PLUS" | "MINUS") term()
+}
+
+void term() : {} {
+    factor()
+}
+
+void factor() : {} {
+    <INTEGER_LITERAL> | cursor() | "CanvasX" | "CanvasY" | ( expression() )
 }
 
 void String() : {} {
     <IDENTIFIER>
+}
+
+void Number() : {} {
+    <INTEGER_LITERAL>
+}
+
+void Declaration() : {} {
+    <DECLARATION>
+}
+
+void Assignment() : {} {
+    <ASSIGNMENT>
+}
+
+String get_message():{Token token;} {
+    token = <MESSAGE>
+    {return token.image.substring(1, token.image.length()-1);}
 }
