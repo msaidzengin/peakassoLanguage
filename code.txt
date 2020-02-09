@@ -1,0 +1,24 @@
+PROGRAM smiley;
+CANVAS-INIT-SECTION :
+!! Define the canvas size and initial cursor location
+CONST CanvasX = 50 ; CONST CanvasY = 50 ; CursorX = 1 ; CursorY = 1 ;
+BRUSH-DECLARATION-SECTION : !! Declare brushes
+BRUSH goz = 1 2, agiz= 2 7, kas= 1 3, burun= 3 1 ;
+DRAWING-SECTION : !! Start drawing
+RENEW-BRUSH 'eski goz degeri degeri en=1 boy=2. Yenisini girin:' goz;
+!! Assume the user enters 1 1
+MOVE CursorX TO 5 ; MOVE CursorY TO CursorX MINUS 1 ;
+PAINT-CANVAS kas;
+MOVE CursorX TO CursorX PLUS 15 ;
+PAINT-CANVAS kas;
+MOVE CursorX TO 6 ; MOVE CursorY TO CursorY PLUS 2;
+PAINT-CANVAS goz;
+MOVE CursorX TO 21 ;
+PAINT-CANVAS goz;
+MOVE CursorX TO 14 ;
+MOVE CursorY TO 7;
+PAINT-CANVAS burun;
+MOVE CursorX TO 11 ;
+MOVE CursorY TO 11;
+PAINT-CANVAS agiz;
+EXHIBIT-CANVAS;

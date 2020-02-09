@@ -1,0 +1,71 @@
+PARSER_BEGIN(PEAKASSO)
+
+import java.util.Scanner;
+public class PEAKASSO {
+    
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        if (args.length==0) {
+            System.out.println("Please enter a file");
+            return;
+        }
+
+        try {
+            new PEAKASSO(new java.io.FileInputStream(new java.io.File(args[0]))).PEAKASSO_Language();
+        } catch(java.io.IOException e) {
+            System.out.println("File not found");
+        } catch(ParseException e){
+            e.printStackTrace();
+        }
+         
+    }
+}
+
+PARSER_END(PEAKASSO)
+
+SKIP: {
+  < " " | "\t" | "\r" | "\n" | "\r\n" >
+| <"--" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
+}
+
+void PEAKASSO_Language():{}
+{
+    "PROGRAM" <id> ";" CanvasInıtSection() BrushDeclarationSection() DrawingSection()
+}
+
+void CanvasInıtSection():{}
+{
+    "CANVAS-INIT-SECTION" CanvasSizeInit() CursorPosInit()
+}
+
+void CanvasSizeInit():{}
+{
+    //todo
+}
+
+void CursorPosInit():{}
+{
+    //todo
+}
+
+void BrushDeclarationSection():{}
+{
+    "BRUSH-DECLARATION-SECTION" (VariableDef())?  ";"
+}
+
+void VariableDef():{}
+{
+    //todo
+}
+
+void DrawingSection():{}
+{
+    "DRAWING-SECTION" (Statement()";")*
+}
+
+void Statement():{}
+{
+    RenewStmt() | PaintStmt() | ExhibitStmt() | CursorMoveStmt()
+}
