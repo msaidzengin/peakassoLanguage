@@ -27,7 +27,7 @@ PARSER_END(PEAKASSO)
 
 SKIP: {
   < " " | "\t" | "\r" | "\n" | "\r\n" >
-| <"--" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
+| <"!!" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
 }
 
 void PEAKASSO_Language():{}
@@ -37,7 +37,7 @@ void PEAKASSO_Language():{}
 
 void CanvasInıtSection():{}
 {
-    "CANVAS-INIT-SECTION" CanvasSizeInit() CursorPosInit()
+    "CANVAS-INIT-SECTION" ":" CanvasSizeInit() CursorPosInit()
 }
 
 void CanvasSizeInit():{}
@@ -52,20 +52,26 @@ void CursorPosInit():{}
 
 void BrushDeclarationSection():{}
 {
-    "BRUSH-DECLARATION-SECTION" (VariableDef())?  ";"
+    "BRUSH-DECLARATION-SECTION" ":" (VariableDef())?
 }
 
 void VariableDef():{}
 {
-    //todo
+    "BRUSH" BrushList() ";"
+}
+
+void BrushList():{}
+{
+    BrushName() | BrushName() BrushList()
 }
 
 void DrawingSection():{}
 {
-    "DRAWING-SECTION" (Statement()";")*
+    "DRAWING-SECTION" ":" (Statement()";")*
 }
 
 void Statement():{}
 {
     RenewStmt() | PaintStmt() | ExhibitStmt() | CursorMoveStmt()
 }
+
