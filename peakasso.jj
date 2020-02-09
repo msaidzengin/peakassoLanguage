@@ -1,11 +1,11 @@
 PARSER_BEGIN(PEAKASSO)
 
-import java.util.Scanner;
+import java.util.*;
 public class PEAKASSO {
-    
+    private static HashMap<String, String[]> map = new HashMap<String, String[]>();
+    private static int[][] paint;
+    private static Scanner sc = new Scanner(System.in);
     public static void main(String[] args) {
-
-        Scanner sc = new Scanner(System.in);
 
         if (args.length==0) {
             System.out.println("Please enter a file");
@@ -13,38 +13,19 @@ public class PEAKASSO {
         }
 
         try {
-            new PEAKASSO(new java.io.FileInputStream(new java.io.File(args[0]))).PEAKASSO_Language();
+          System.out.println("----------------");
+          System.out.println(args);
+            new PEAKASSO(new java.io.FileInputStream(new java.io.File("deneme.txt"))).PEAKASSO_Language();
         } catch(java.io.IOException e) {
             System.out.println("File not found");
         } catch(ParseException e){
             e.printStackTrace();
         }
-         
+
     }
 }
 
 PARSER_END(PEAKASSO)
-
-
-TOKEN : {
-    < ID: <LETTER> (<LETTER>|<DIGIT>)* >
-    |
-    < #LETTER: ["a"-"z","A"-"Z"] >
-    |
-    < #DIGIT: ["0"-"9"] >
-}
-
-TOKEN : {
-    < INT_LIT: <DECIMAL_LITERAL> | (<SIGN><DECIMAL_LITERAL>) >
-    |
-    < #DECIMAL_LITERAL: (["0"-"9"])*>
-    |
-    < #SIGN: ("+" | "-") >
-}
-
-TOKEN : {
-    < MESSAGE: ["\""] (~["\"","\n","\r"])* ["\""] >
-}
 
 SKIP: {
   < " " | "\t" | "\r" | "\n" | "\r\n" >
@@ -59,20 +40,21 @@ void CanvasInitSection() : {} {
     "CANVAS-INIT-SECTION" ":" CanvasSizeInit() CursorPosInit()
 }
 
-void CanvasSizeInit() : {} {
-    CanvasInitStatement() ";" CanvasInitStatement() ";"
+void CanvasSizeInit() : {Token x; Token y;} {
+     "CONST" "CanvasX" "=" x=<INT_LIT> ";"
+     {int parsed = Integer.parseInt(x.image); if(parsed > 200 || parsed < 5) System.out.println("Bad argument for CanvasX");  x.image = "100";}
+     "CONST" "CanvasY" "=" y=<INT_LIT> ";"
+     {int parsed_y = Integer.parseInt(y.image); if(parsed_y > 200 || parsed_y < 5) System.out.println("Bad argument for CanvasY");  y.image = "100";}
+     {paint = new int[parsed][parsed_y];}
 }
 
-void CanvasInitStatement() : {} {
-    Declaration() String() Assignment() Number()
-}
-
-void CursorPosInit() : {} {
-    CursorInitStatement() ";" CursorInitStatement() ";"
-}
-
-void CursorInitStatement() : {} {
-    <IDENTIFIER> Assignment() Number() ";"
+void CursorPosInit() : {Token n;} {
+    "CursorX" "=" n=<INT_LIT> ";"
+    {if(map.get("CursorX") != null) throw new ParseException("You cannot re-initiate the variable");
+    else {String[] arr = { n.image + "" }; map.put("CursorX", arr); }}
+    "CursorY" "=" n=<INT_LIT> ";"
+    {if(map.get("CursorY") != null) throw new ParseException("You cannot re-initiate the variable");
+    else {String[] arr2 = { n.image + "" }; map.put("CursorY", arr2);}}
 }
 
 void BrushDeclarationSection() : {} {
@@ -84,70 +66,118 @@ void VariableDef() : {} {
 }
 
 void BrushList() : {} {
-    BrushName() | BrushName() BrushList()
+    BrushName() (LOOKAHEAD(2) "," BrushList())*
 }
 
-void BrushName() : {} {
-    <ID> [Assignment() Number() Number()]
+String BrushName() : {Token id; Token x; Token y;} {
+    id=<ID>
+    ("=" x=<INT_LIT> y=<INT_LIT> {String arr[] = { x.image, y.image }; map.put(id.image, arr); return id.image;})?
+    {return id.image;}
 }
 
 void DrawingSection() : {} {
-    "DRAWING-SECTION" ":" (Statement()";")*
+    "DRAWING-SECTION" ":" (Statement() ";")*
 }
 
 void Statement() : {} {
     RenewStmt() | PaintStmt() | ExhibitStmt() | CursorMoveStmt()
 }
 
-void RenewStmt() : {String msg;} {
-    "RENEW-BRUSH" msg=get_message() BrushName()
+void RenewStmt() : {String bn; String msg; String x; String y;} {
+    "RENEW-BRUSH" msg=get_message() bn=BrushName()
+    {System.out.println(msg); x=sc.next(); y=sc.next(); String arr[] = { x, y }; map.put(bn, arr);}
 }
 
-void PaintStmt() : {} {
-    "PAINT-CANVAS" BrushName()
+void PaintStmt() : {String bn; int c_x; int c_y; int b_x; int b_y;} {
+    "PAINT-CANVAS" bn=BrushName()
+    {c_x = Integer.parseInt(map.get("CursorX")[0]);
+    c_y = Integer.parseInt(map.get("CursorY")[0]);
+    b_x = Integer.parseInt(map.get(bn)[0]); b_y = Integer.parseInt(map.get(bn)[1]);
+    System.out.println("bn: " + bn + " c_x, c_y:" + c_x + " " + c_y + "b_x, b_y: " + b_x + " " + b_y);
+    for(int ix = c_x - 1; ix < c_x + b_y - 1; ix++)
+        for(int iy = c_y - 1; iy < c_y + b_x - 1; iy++)
+            paint[iy][ix] = 1;
+  }
 }
 
 void ExhibitStmt() : {} {
     "EXHIBIT-CANVAS"
+    {for(int x = 0; x < paint.length; x++) {
+        for(int y = 0; y < paint[0].length; y++) {
+            if(paint[x][y] == 0) System.out.print(" "); else System.out.print("*");
+            }
+        System.out.println();
+        }
+    }
 }
 
-void CursorMoveStmt() : {} {
-    "MOVE" cursor() "TO" expression()
+void CursorMoveStmt() : {String c; String e;} {
+    "MOVE" c=cursor() "TO" e=expression()
+    {
+    int dimension = 0;
+    if(c.contains("X")) dimension = 1;
+    String[] terms=e.split(" ");
+    if(terms.length==1) { String arr[] = { terms[0] }; map.put(c,arr); }
+    else switch(terms[1]) {
+        case("PLUS"):
+            int sum = Integer.parseInt(terms[0])+Integer.parseInt(terms[2]);
+            int size_canvas = dimension == 1 ? paint.length : paint[0].length;
+            if(sum > size_canvas) throw new ParseException("Not a valid argument");
+            String arr[] = { sum + "" };
+            map.put(c, arr);
+            break;
+        case("MINUS"):
+            sum = Integer.parseInt(terms[0])-Integer.parseInt(terms[2]);
+            size_canvas = dimension == 1 ? paint.length : paint[0].length;
+            if(sum < size_canvas) throw new ParseException("Not a valid argument");
+            String arr2[] = { sum + "" };
+            map.put(c, arr2);
+    }
+    }
 }
 
-void cursor() : {} {
-    "CursorX" | "CursorY"
+String cursor() : {} {
+    "CursorX" { return "CursorX"; } | "CursorY" { return "CursorY"; }
 }
 
-void expression() : {} {
-    term() | expression() ("PLUS" | "MINUS") term()
+String expression() : {String t; String e; String o; String t2;} {
+	t=term() (e=expression() o=operation() t2=term() {return e + " " + o + " " + t2;})*
+    { return t; }
+
 }
 
-void term() : {} {
-    factor()
+String operation() : {} {
+    "PLUS" { return "PLUS"; } | "MINUS" { return "MINUS"; }
 }
 
-void factor() : {} {
-    <INTEGER_LITERAL> | cursor() | "CanvasX" | "CanvasY" | ( expression() )
+String term() : {String s;} {
+    s=factor() { return s;}
 }
 
-void String() : {} {
-    <IDENTIFIER>
+String factor() : {Token token; String c;} {
+    token = < INT_LIT > { return token.image; } | c=cursor() { return map.get(c)[0]; }
+    | "CanvasX"  { return "CanvasX"; } | "CanvasY" { return "CanvasY"; }
+    | "(" c=expression() ")" { return c; }
 }
 
-void Number() : {} {
-    <INTEGER_LITERAL>
-}
-
-void Declaration() : {} {
-    <DECLARATION>
-}
-
-void Assignment() : {} {
-    <ASSIGNMENT>
-}
 
 String get_message():{Token token;} {
     token = <MESSAGE>
     {return token.image.substring(1, token.image.length()-1);}
+}
+
+TOKEN : {
+    < ID: ["a"-"z","A"-"Z"] (["a"-"z","A"-"Z"]|["0"-"9"])* >
+}
+
+TOKEN : {
+    < INT_LIT: <DECIMAL_LITERAL> | (<SIGN><DECIMAL_LITERAL>) >
+    |
+    < #DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])*>
+    |
+    < #SIGN: ("+" | "-") >
+}
+
+TOKEN : {
+    < MESSAGE: ["\'"] (~["\"","\n","\r"])* ["\'"] >
 }
