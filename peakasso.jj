@@ -115,21 +115,36 @@ void CursorMoveStmt() : {String c; String e;} {
     if(c.contains("X")) dimension = 1;
     String[] terms=e.split(" ");
     if(terms.length==1) { String arr[] = { terms[0] }; map.put(c,arr); }
-    else switch(terms[1]) {
-        case("PLUS"):
-            int sum = Integer.parseInt(map.get(terms[0])[0])+Integer.parseInt(terms[2]);
-            int size_canvas = dimension == 1 ? paint.length : paint[0].length;
-            if(sum > size_canvas) throw new ParseException("Not a valid argument");
-            String arr[] = { sum + "" };
-            map.put(c, arr);
-            break;
-        case("MINUS"):
-            sum = Integer.parseInt(map.get(terms[0])[0])-Integer.parseInt(terms[2]);
-            size_canvas = dimension == 1 ? paint.length : paint[0].length;
-            if(sum < 0) throw new ParseException("Not a valid argument");
-            String arr2[] = { sum + "" };
-            map.put(c, arr2);
-    }
+    else {
+        switch(terms[1]) {
+	        case("PLUS"):
+	        	int secondTerm = 0;
+	        	if ( terms[2].equals("CursorX") || terms[2].equals("CursorY") || terms[2].equals("CanvasX") || terms[2].equals("CanvasY") ) {
+	        		secondTerm = Integer.parseInt(map.get(terms[2])[0]);
+	       		} else {
+	        		secondTerm = Integer.parseInt(terms[2]);
+				}
+	            int sum = Integer.parseInt(map.get(terms[0])[0]) + secondTerm;
+	            int size_canvas = dimension == 1 ? paint.length : paint[0].length;
+	            if(sum > size_canvas) throw new ParseException("Not a valid argument");
+	            String arr[] = { sum + "" };
+	            map.put(c, arr);
+	            break;
+	        case("MINUS"):
+	        	secondTerm = 0;
+	        	if ( terms[2].equals("CursorX") || terms[2].equals("CursorY") || terms[2].equals("CanvasX") || terms[2].equals("CanvasY") ) { 
+	        		secondTerm = Integer.parseInt(map.get(terms[2])[0]);
+	       		} else {
+	        		secondTerm = Integer.parseInt(terms[2]);
+				}
+	            sum = Integer.parseInt(map.get(terms[0])[0]) - secondTerm;
+	            size_canvas = dimension == 1 ? paint.length : paint[0].length;
+	            if(sum < 0) throw new ParseException("Not a valid argument");
+	            String arr2[] = { sum + "" };
+	            map.put(c, arr2);
+	            break;
+    		}
+    	}
     }
 }
 
