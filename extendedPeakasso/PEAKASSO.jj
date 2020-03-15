@@ -1,0 +1,221 @@
+PARSER_BEGIN(PEAKASSO)
+
+import java.util.*;
+import java.awt.*;
+import javax.swing.*;
+public class PEAKASSO {
+    private static HashMap<String, String[]> map = new HashMap<String, String[]>();
+    private static int[][] paint;
+    private static int color = 1;
+    private static Scanner sc = new Scanner(System.in);
+    private static JFrame frame = new JFrame();
+    public static void main(String[] args) {
+
+        if (args.length==0) {
+            System.out.println("Please enter a file");
+            return;
+        }
+
+        try {
+            new PEAKASSO(new java.io.FileInputStream(new java.io.File(args[0]))).PEAKASSO_Language();
+        } catch(java.io.IOException e) {
+            System.out.println("File not found");
+        } catch(ParseException e){
+            e.printStackTrace();
+        }
+
+    }
+}
+
+PARSER_END(PEAKASSO)
+
+SKIP: {
+  < " " | "\t" | "\r" | "\n" | "\r\n" >
+| < "!!" (~["\n","\r"])* ("\n"|"\r"|"\r\n") >
+}
+
+void PEAKASSO_Language() : {} {
+    "PROGRAM" <ID> ";" CanvasInitSection() BrushDeclarationSection() DrawingSection()
+}
+
+void CanvasInitSection() : {} {
+    "CANVAS-INIT-SECTION" ":" CanvasSizeInit() CursorPosInit()
+}
+
+void CanvasSizeInit() : {Token x; Token y;} {
+     "CONST" "CanvasX" "=" x=<INT_LIT> ";"
+     {int parsed = Integer.parseInt(x.image); if(parsed > 200 || parsed < 5) System.out.println("Bad argument for CanvasX");  x.image = "100";}
+     "CONST" "CanvasY" "=" y=<INT_LIT> ";"
+     {int parsed_y = Integer.parseInt(y.image); if(parsed_y > 200 || parsed_y < 5) System.out.println("Bad argument for CanvasY");  y.image = "100";}
+     { // INITIALIZE FRAME
+         paint = new int[parsed][parsed_y];
+         frame.setLayout(new GridLayout(parsed, parsed_y));
+     }
+}
+
+void CursorPosInit() : {Token n;} {
+    "CursorX" "=" n=<INT_LIT> ";"
+    {if(map.get("CursorX") != null) throw new ParseException("You cannot re-initiate the variable");
+    else {String[] arr = { n.image + "" }; map.put("CursorX", arr); }}
+    "CursorY" "=" n=<INT_LIT> ";"
+    {if(map.get("CursorY") != null) throw new ParseException("You cannot re-initiate the variable");
+    else {String[] arr2 = { n.image + "" }; map.put("CursorY", arr2);}}
+}
+
+void BrushDeclarationSection() : {} {
+    "BRUSH-DECLARATION-SECTION" ":" (VariableDef())?
+}
+
+void VariableDef() : {} {
+    "BRUSH" BrushList() ";"
+}
+
+void BrushList() : {} {
+    BrushName() (LOOKAHEAD(2) "," BrushList())*
+}
+
+String BrushName() : {Token id; Token x; Token y;} {
+    id=<ID>
+    ("=" x=<INT_LIT> y=<INT_LIT> {String arr[] = { x.image, y.image, color+"" }; color++;if(color == 7) color = 1; map.put(id.image, arr); return id.image;})?
+    {return id.image;}
+}
+
+void DrawingSection() : {} {
+    "DRAWING-SECTION" ":" (Statement() ";")*
+}
+
+void Statement() : {} {
+    RenewStmt() | PaintStmt() | ExhibitStmt() | CursorMoveStmt()
+}
+
+void RenewStmt() : {String bn; String msg; String x; String y;} {
+    "RENEW-BRUSH" msg=get_message() bn=BrushName()
+    {System.out.println(msg); String color = map.get(bn)[2];  x=sc.next(); y=sc.next(); String arr[] = { x, y, color }; map.put(bn, arr);}
+}
+
+void PaintStmt() : {String bn; int c_x; int c_y; int b_x; int b_y; int color;} {
+    "PAINT-CANVAS" bn=BrushName()
+    {c_x = Integer.parseInt(map.get("CursorX")[0]);
+    c_y = Integer.parseInt(map.get("CursorY")[0]);
+    b_x = Integer.parseInt(map.get(bn)[0]);
+    b_y = Integer.parseInt(map.get(bn)[1]);
+    color = Integer.parseInt(map.get(bn)[2]);
+    for(int ix = c_x - 1; ix < c_x + b_y - 1; ix++)
+        for(int iy = c_y - 1; iy < c_y + b_x - 1; iy++)
+            paint[iy][ix] = color;
+  }
+}
+
+void ExhibitStmt() : {} {
+    "EXHIBIT-CANVAS"
+    {
+        for(int x = 0; x < paint.length; x++) {
+            for(int y = 0; y < paint[0].length; y++) {
+                JButton temp;
+                if(paint[x][y] == 0) {
+                  temp = new JButton(); temp.setBackground(Color.WHITE);
+                }
+                else if(paint[x][y] == 1) {
+                  temp = new JButton(); temp.setBackground(Color.RED);
+                }
+                else if(paint[x][y] == 2) {
+                  temp = new JButton(); temp.setBackground(Color.GREEN);
+                }
+                else if(paint[x][y] == 3) {
+                  temp = new JButton(); temp.setBackground(Color.BLUE);
+                }
+                else if(paint[x][y] == 4) {
+                  temp = new JButton(); temp.setBackground(Color.BLACK);
+                }
+                else if(paint[x][y] == 5) {
+                  temp = new JButton(); temp.setBackground(Color.YELLOW);
+                }
+                else if(paint[x][y] == 6) {
+                  temp = new JButton(); temp.setBackground(Color.PINK);
+                }
+                else if(paint[x][y] == 7) {
+                  temp = new JButton(); temp.setBackground(Color.ORANGE);
+                }
+                else {
+                  temp = new JButton(); temp.setBackground(Color.BLACK);
+                }
+                temp.setEnabled(false);
+                temp.setOpaque(true);
+                frame.add(temp);
+            }
+        }
+        frame.setSize(600, 600);
+        frame.setVisible(true);
+    }
+}
+
+void CursorMoveStmt() : {String c; String e;} {
+    "MOVE" c=cursor() "TO" e=expression()
+    {
+    int dimension = 0;
+    if(c.contains("X")) dimension = 1;
+    String[] terms=e.split(" ");
+    if(terms.length==1) { String arr[] = { terms[0] }; map.put(c,arr); }
+    else switch(terms[1]) {
+        case("PLUS"):
+            int sum = Integer.parseInt(map.get(terms[0])[0])+Integer.parseInt(terms[2]);
+            int size_canvas = dimension == 1 ? paint.length : paint[0].length;
+            if(sum > size_canvas) throw new ParseException("Not a valid argument");
+            String arr[] = { sum + "" };
+            map.put(c, arr);
+            break;
+        case("MINUS"):
+            sum = Integer.parseInt(map.get(terms[0])[0])-Integer.parseInt(terms[2]);
+            size_canvas = dimension == 1 ? paint.length : paint[0].length;
+            if(sum < 0) throw new ParseException("Not a valid argument");
+            String arr2[] = { sum + "" };
+            map.put(c, arr2);
+    }
+    }
+}
+
+String cursor() : {} {
+    "CursorX" { return "CursorX"; } | "CursorY" { return "CursorY"; }
+}
+
+String expression() : {String t; String e; String o = ""; String t2;} {
+    t=term()  ( LOOKAHEAD(2) (e=expression() | o=operation()) t2=term() {return t + " " + o + " " + t2;})*
+    { return t; }
+
+}
+
+String operation() : {} {
+    "PLUS" { return "PLUS"; } | "MINUS" { return "MINUS"; }
+}
+
+String term() : {String s;} {
+    s=factor() { return s;}
+}
+
+String factor() : {Token token; String c;} {
+    token = < INT_LIT > { return token.image; } | c=cursor() {return c; }
+    | "CanvasX"  { return "CanvasX"; } | "CanvasY" { return "CanvasY"; }
+    | "(" c=expression() ")" { return c; }
+}
+
+
+String get_message():{Token token;} {
+    token = <MESSAGE>
+    {return token.image.substring(1, token.image.length()-1);}
+}
+
+TOKEN : {
+    < ID: ["a"-"z","A"-"Z"] (["a"-"z","A"-"Z"]|["0"-"9"])* >
+}
+
+TOKEN : {
+    < INT_LIT: <DECIMAL_LITERAL> | (<SIGN><DECIMAL_LITERAL>) >
+    |
+    < #DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])*>
+    |
+    < #SIGN: ("+" | "-") >
+}
+
+TOKEN : {
+    < MESSAGE: ["\'"] (~["\"","\n","\r"])* ["\'"] >
+}
