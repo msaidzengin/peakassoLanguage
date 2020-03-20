@@ -5,8 +5,8 @@ import java.awt.*;
 import javax.swing.*;
 public class PEAKASSO {
     private static HashMap<String, String[]> map = new HashMap<String, String[]>();
+    private static boolean flag = false;
     private static int[][] paint;
-    private static int color = 1;
     private static Scanner sc = new Scanner(System.in);
     private static JFrame frame = new JFrame();
     public static void main(String[] args) {
@@ -63,7 +63,7 @@ void CursorPosInit() : {Token n;} {
 }
 
 void BrushDeclarationSection() : {} {
-    "BRUSH-DECLARATION-SECTION" ":" (VariableDef())?
+    "BRUSH-DECLARATION-SECTION" ":" (VariableDef())? (IfElseStatement())*
 }
 
 void VariableDef() : {} {
@@ -74,10 +74,21 @@ void BrushList() : {} {
     BrushName() (LOOKAHEAD(2) "," BrushList())*
 }
 
-String BrushName() : {Token id; Token x; Token y;} {
+String BrushName() : {Token id; Token x; Token y; String color; } {
     id=<ID>
-    ("=" x=<INT_LIT> y=<INT_LIT> {String arr[] = { x.image, y.image, color+"" }; color++;if(color == 7) color = 1; map.put(id.image, arr); return id.image;})?
+    (
+        "=" x=<INT_LIT> y=<INT_LIT> color=color() {
+            String arr[] = { x.image, y.image, color }; map.put(id.image, arr); return id.image;
+        }
+
+    )?
     {return id.image;}
+}
+
+String IfBrushName() : {Token id; Token x; Token y; String color; } {
+    id=<ID> "=" x=<INT_LIT> y=<INT_LIT> color=color() {
+            String arr[] = { x.image, y.image, color }; return id.image + "," + x.image + "," + y.image + "," + color;
+        }
 }
 
 void DrawingSection() : {} {
@@ -88,22 +99,48 @@ void Statement() : {} {
     RenewStmt() | PaintStmt() | ExhibitStmt() | CursorMoveStmt()
 }
 
-void RenewStmt() : {String bn; String msg; String x; String y;} {
+void RenewStmt() : {String bn; String msg; String x; String y; String color;} {
     "RENEW-BRUSH" msg=get_message() bn=BrushName()
-    {System.out.println(msg); String color = map.get(bn)[2];  x=sc.next(); y=sc.next(); String arr[] = { x, y, color }; map.put(bn, arr);}
+    {System.out.println(msg); x=sc.next(); y=sc.next(); color=sc.next(); String arr[] = { x, y, color }; map.put(bn, arr);}
 }
 
-void PaintStmt() : {String bn; int c_x; int c_y; int b_x; int b_y; int color;} {
-    "PAINT-CANVAS" bn=BrushName()
-    {c_x = Integer.parseInt(map.get("CursorX")[0]);
-    c_y = Integer.parseInt(map.get("CursorY")[0]);
-    b_x = Integer.parseInt(map.get(bn)[0]);
-    b_y = Integer.parseInt(map.get(bn)[1]);
-    color = Integer.parseInt(map.get(bn)[2]);
-    for(int ix = c_x - 1; ix < c_x + b_y - 1; ix++)
-        for(int iy = c_y - 1; iy < c_y + b_x - 1; iy++)
-            paint[iy][ix] = color;
-  }
+void PaintStmt() : {String bn; int c_x; int c_y; int b_x; int b_y; String color;} {
+    "PAINT-CANVAS" bn=BrushName() {
+        c_x = Integer.parseInt(map.get("CursorX")[0]);
+        c_y = Integer.parseInt(map.get("CursorY")[0]);
+        b_x = Integer.parseInt(map.get(bn)[0]);
+        b_y = Integer.parseInt(map.get(bn)[1]);
+        color = map.get(bn)[2];
+        for(int ix = c_x - 1; ix < c_x + b_y - 1; ix++) {
+            for(int iy = c_y - 1; iy < c_y + b_x - 1; iy++) {
+                switch(color) {
+                    case "BLACK":
+                        paint[iy][ix] = 1;
+                        break;
+                    case "RED":
+                        paint[iy][ix] = 2;
+                        break;
+                    case "GREEN":
+                        paint[iy][ix] = 3;
+                        break;
+                    case "BLUE":
+                        paint[iy][ix] = 4;
+                        break;
+                    case "YELLOW":
+                        paint[iy][ix] = 5;
+                        break;
+                    case "PINK":
+                        paint[iy][ix] = 6;
+                        break;
+                    case "ORANGE":
+                        paint[iy][ix] = 7;
+                        break;
+                    default:
+                    // Do nothing. There won't be another color.
+                }
+            }
+        }
+    }
 }
 
 void ExhibitStmt() : {} {
@@ -111,34 +148,35 @@ void ExhibitStmt() : {} {
     {
         for(int x = 0; x < paint.length; x++) {
             for(int y = 0; y < paint[0].length; y++) {
-                JButton temp;
-                if(paint[x][y] == 0) {
-                  temp = new JButton(); temp.setBackground(Color.WHITE);
+                JButton temp = new JButton();
+
+                switch(paint[x][y]) {
+                    case 0:
+                        temp.setBackground(Color.WHITE);
+                        break;
+                    case 1:
+                        temp.setBackground(Color.BLACK);
+                        break;
+                    case 2:
+                        temp.setBackground(Color.RED);
+                        break;
+                    case 3:
+                        temp.setBackground(Color.GREEN);
+                        break;
+                    case 4:
+                        temp.setBackground(Color.BLUE);
+                        break;
+                    case 5:
+                        temp.setBackground(Color.YELLOW);
+                        break;
+                    case 6:
+                        temp.setBackground(Color.PINK);
+                        break;
+                    case 7:
+                        temp.setBackground(Color.ORANGE);
+                        break;
                 }
-                else if(paint[x][y] == 1) {
-                  temp = new JButton(); temp.setBackground(Color.RED);
-                }
-                else if(paint[x][y] == 2) {
-                  temp = new JButton(); temp.setBackground(Color.GREEN);
-                }
-                else if(paint[x][y] == 3) {
-                  temp = new JButton(); temp.setBackground(Color.BLUE);
-                }
-                else if(paint[x][y] == 4) {
-                  temp = new JButton(); temp.setBackground(Color.BLACK);
-                }
-                else if(paint[x][y] == 5) {
-                  temp = new JButton(); temp.setBackground(Color.YELLOW);
-                }
-                else if(paint[x][y] == 6) {
-                  temp = new JButton(); temp.setBackground(Color.PINK);
-                }
-                else if(paint[x][y] == 7) {
-                  temp = new JButton(); temp.setBackground(Color.ORANGE);
-                }
-                else {
-                  temp = new JButton(); temp.setBackground(Color.BLACK);
-                }
+
                 temp.setEnabled(false);
                 temp.setOpaque(true);
                 frame.add(temp);
@@ -184,6 +222,10 @@ String expression() : {String t; String e; String o = ""; String t2;} {
 
 }
 
+String color() : {Token color;} {
+    color=<COLOR> { return color.image; } | { return "BLACK"; }
+}
+
 String operation() : {} {
     "PLUS" { return "PLUS"; } | "MINUS" { return "MINUS"; }
 }
@@ -198,10 +240,73 @@ String factor() : {Token token; String c;} {
     | "(" c=expression() ")" { return c; }
 }
 
-
 String get_message():{Token token;} {
     token = <MESSAGE>
     {return token.image.substring(1, token.image.length()-1);}
+}
+
+
+void IfElseStatement() : {String b1, b2;}
+{
+  "if" "(" ConditionalExpression() ")" b1=IfBrushName() ";" "else" b2=IfBrushName() ";"
+  {
+    if (flag) {
+      String arr[] = b1.split(",");
+      map.put(arr[0], new String[] { arr[1], arr[2], arr[3] });
+    }
+    else {
+      String arr[] = b2.split(",");
+      map.put(arr[0], new String[] { arr[1], arr[2], arr[3] });
+    }
+
+  }
+}
+
+void ConditionalExpression() : {}
+{
+  ConditionalAndExpression() ( "||" ConditionalAndExpression() )*
+}
+
+void ConditionalAndExpression() :
+{}
+{
+  InclusiveOrExpression() ( "&&" InclusiveOrExpression() )*
+}
+
+void InclusiveOrExpression() :
+{}
+{
+  ExclusiveOrExpression() ( "|" ExclusiveOrExpression() )*
+}
+
+void ExclusiveOrExpression() :
+{}
+{
+  AndExpression() ( "^" AndExpression() )*
+}
+
+void AndExpression() :
+{}
+{
+  EqualityExpression() ( "&" EqualityExpression() )*
+}
+
+void EqualityExpression() :
+{}
+{
+	check()
+}
+
+void check() : {Token token; Token token2;} {
+  	
+    token=< INT_LIT > ( ( "==" | "!=" ) token2=< INT_LIT > )+ {flag = Integer.parseInt(token.image) == Integer.parseInt(token2.image); }
+    |
+    token=< ID > ( ( "==" | "!=" ) token2=< ID > )+ { flag = ((map.get(token.image)[0] == map.get(token2.image)[0]) && (map.get(token.image)[1] == map.get(token2.image)[1])); } 
+}
+
+
+TOKEN : {
+    < COLOR: ("BLACK") | ("RED") | ("GREEN") | ("BLUE") | ("YELLOW") | ("PINK") | ("ORANGE") >
 }
 
 TOKEN : {
