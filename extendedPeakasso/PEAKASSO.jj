@@ -5,8 +5,11 @@ import java.awt.*;
 import javax.swing.*;
 public class PEAKASSO {
     private static HashMap<String, String[]> map = new HashMap<String, String[]>();
-    private static boolean flag = false;
+    private static boolean flag = false, loop_flag = false;
+    private static int stopPoint;
     private static int[][] paint;
+    private static String right, stopOp;
+    private static String loopCondition = "";
     private static Scanner sc = new Scanner(System.in);
     private static JFrame frame = new JFrame();
     public static void main(String[] args) {
@@ -96,7 +99,7 @@ void DrawingSection() : {} {
 }
 
 void Statement() : {} {
-    RenewStmt() | PaintStmt() | ExhibitStmt() | CursorMoveStmt()
+    WhileStmt() | RenewStmt() | PaintStmt() | ExhibitStmt() | CursorMoveStmt()
 }
 
 void RenewStmt() : {String bn; String msg; String x; String y; String color;} {
@@ -212,6 +215,201 @@ void CursorMoveStmt() : {String c; String e;} {
     }
 }
 
+void WhileStmt() : {Token left_id; Token right_id;} {
+    "while" "(" whileExpression() ")"
+        loopBodyStatement()
+}
+
+void loopBodyStatement() : {Token id; Token dimension; String op;} {
+    id=<ID> "." dimension=<ID> op=binaryOperator() (intLit())?
+    {
+        if (loop_flag) {
+            String[] values = map.get(id.image);
+            int valueToBeChanged = 0;
+            
+            switch(dimension.image) {
+                case "x":
+                    valueToBeChanged = Integer.parseInt(values[0]);
+                    break;
+                case "y":
+                    valueToBeChanged = Integer.parseInt(values[1]);
+                    break;
+            }
+
+			int rightParsed = 0;
+			if (right != null)
+            	rightParsed = Integer.parseInt(right);
+
+
+			switch(stopOp) {
+	            case "LT":
+	                while (valueToBeChanged < stopPoint) {
+						switch(op) {
+			                case "INCREMENT":
+			                    valueToBeChanged++;
+			                    break;
+			                case "DECREMENT":
+			                    valueToBeChanged--;
+			                    break;
+			                case "PLUS_ASSIGN":
+			                    valueToBeChanged += rightParsed;
+			                    break;
+			                case "MINUS_ASSIGN":
+			                    valueToBeChanged -= rightParsed;
+			                    break;
+			                case "ASSIGN":
+			                    valueToBeChanged = rightParsed;
+			                    break;
+			                case "MLTPY_ASSIGN":
+			                    valueToBeChanged *= rightParsed;
+			                    break;
+			            }
+	                }
+	                break;
+	            case "GT":
+	                while (valueToBeChanged > stopPoint) {
+						switch(op) {
+			                case "INCREMENT":
+			                    valueToBeChanged++;
+			                    break;
+			                case "DECREMENT":
+			                    valueToBeChanged--;
+			                    break;
+			                case "PLUS_ASSIGN":
+			                    valueToBeChanged += rightParsed;
+			                    break;
+			                case "MINUS_ASSIGN":
+			                    valueToBeChanged -= rightParsed;
+			                    break;
+			                case "ASSIGN":
+			                    valueToBeChanged = rightParsed;
+			                    break;
+			                case "MLTPY_ASSIGN":
+			                    valueToBeChanged *= rightParsed;
+			                    break;
+			            }
+	                }
+	                break;
+	            case "LTE":
+	                while (valueToBeChanged <= stopPoint) {
+						switch(op) {
+			                case "INCREMENT":
+			                    valueToBeChanged++;
+			                    break;
+			                case "DECREMENT":
+			                    valueToBeChanged--;
+			                    break;
+			                case "PLUS_ASSIGN":
+			                    valueToBeChanged += rightParsed;
+			                    break;
+			                case "MINUS_ASSIGN":
+			                    valueToBeChanged -= rightParsed;
+			                    break;
+			                case "ASSIGN":
+			                    valueToBeChanged = rightParsed;
+			                    break;
+			                case "MLTPY_ASSIGN":
+			                    valueToBeChanged *= rightParsed;
+			                    break;
+			            }
+	                }
+	                break;
+	            case "GTE":
+	                while (valueToBeChanged >= stopPoint) {
+						switch(op) {
+			                case "INCREMENT":
+			                    valueToBeChanged++;
+			                    break;
+			                case "DECREMENT":
+			                    valueToBeChanged--;
+			                    break;
+			                case "PLUS_ASSIGN":
+			                    valueToBeChanged += rightParsed;
+			                    break;
+			                case "MINUS_ASSIGN":
+			                    valueToBeChanged -= rightParsed;
+			                    break;
+			                case "ASSIGN":
+			                    valueToBeChanged = rightParsed;
+			                    break;
+			                case "MLTPY_ASSIGN":
+			                    valueToBeChanged *= rightParsed;
+			                    break;
+			            }
+	                }
+	                break;
+	            case "NE":
+	                while (valueToBeChanged != stopPoint) {
+						switch(op) {
+			                case "INCREMENT":
+			                    valueToBeChanged++;
+			                    break;
+			                case "DECREMENT":
+			                    valueToBeChanged--;
+			                    break;
+			                case "PLUS_ASSIGN":
+			                    valueToBeChanged += rightParsed;
+			                    break;
+			                case "MINUS_ASSIGN":
+			                    valueToBeChanged -= rightParsed;
+			                    break;
+			                case "ASSIGN":
+			                    valueToBeChanged = rightParsed;
+			                    break;
+			                case "MLTPY_ASSIGN":
+			                    valueToBeChanged *= rightParsed;
+			                    break;
+			            }
+	                }
+	                break;
+	            case "EQ":
+	                while (valueToBeChanged == stopPoint) {
+						switch(op) {
+			                case "INCREMENT":
+			                    valueToBeChanged++;
+			                    break;
+			                case "DECREMENT":
+			                    valueToBeChanged--;
+			                    break;
+			                case "PLUS_ASSIGN":
+			                    valueToBeChanged += rightParsed;
+			                    break;
+			                case "MINUS_ASSIGN":
+			                    valueToBeChanged -= rightParsed;
+			                    break;
+			                case "ASSIGN":
+			                    valueToBeChanged = rightParsed;
+			                    break;
+			                case "MLTPY_ASSIGN":
+			                    valueToBeChanged *= rightParsed;
+			                    break;
+			            }
+	                }
+	                break;
+	        }
+	        
+            switch(dimension.image) {
+                case "x":
+                    values = new String[] {valueToBeChanged + "", values[1], values[2]};
+                    map.put(id.image, values);
+                    break;
+                case "y":
+                    values = new String[] {values[0], valueToBeChanged + "", values[2]};
+                    map.put(id.image, values);
+                    break;
+            }
+        }
+    }
+}
+
+void intLit() : {Token intLiteral;} {
+    intLiteral=<INT_LIT> { right = intLiteral.image; }
+}
+
+String binaryOperator() : {} {
+    "++" { return "INCREMENT"; } | "--" { return "DECREMENT"; } | "+=" { return "PLUS_ASSIGN"; } | "-=" { return "MINUS_ASSIGN"; }  | "=" { return "ASSIGN"; } | "*="  { return "MLTPY_ASSIGN"; }
+}
+
 String cursor() : {} {
     "CursorX" { return "CursorX"; } | "CursorY" { return "CursorY"; }
 }
@@ -245,6 +443,51 @@ String get_message():{Token token;} {
     {return token.image.substring(1, token.image.length()-1);}
 }
 
+void whileExpression() : {} {
+     (LOOKAHEAD(2) ConditionalExpression())? (UnaryExpression())?
+}
+
+void UnaryExpression() : {Token id; Token dimension; Token right; String op;} {
+    id=<ID> "." dimension=<ID> op=unaryOperator() right=<INT_LIT> {
+        String[] values = map.get(id.image);
+        int valueToBeChecked = 0;
+        switch(dimension.image) {
+            case "x":
+                valueToBeChecked = Integer.parseInt(values[0]);
+                break;
+            case "y":
+                valueToBeChecked = Integer.parseInt(values[1]);
+                break;
+        }
+        int parsedRight = Integer.parseInt(right.image);
+        stopPoint = parsedRight;
+        stopOp = op;
+        switch(op) {
+            case "LT":
+                if(valueToBeChecked < parsedRight) loop_flag = true;
+                break;
+            case "GT":
+                if(valueToBeChecked > parsedRight) loop_flag = true;
+                break;
+            case "LTE":
+                if(valueToBeChecked <= parsedRight) loop_flag = true;
+                break;
+            case "GTE":
+                if(valueToBeChecked >= parsedRight) loop_flag = true;
+                break;
+            case "NE":
+                if(valueToBeChecked != parsedRight) loop_flag = true;
+                break;
+            case "EQ":
+                if(valueToBeChecked == parsedRight) loop_flag = true;
+                break;
+        }
+    }
+}
+
+String unaryOperator() : {} {
+    "<" { return "LT"; } | ">" { return "GT"; } | "<=" { return "LTE"; } | ">=" { return "GTE"; } | "!=" { return "NE"; } | "==" { return "EQ"; }
+}
 
 void IfElseStatement() : {String b1, b2;}
 {
@@ -298,10 +541,10 @@ void EqualityExpression() :
 }
 
 void check() : {Token token; Token token2;} {
-  	
+
     token=< INT_LIT > ( ( "==" | "!=" ) token2=< INT_LIT > )+ {flag = Integer.parseInt(token.image) == Integer.parseInt(token2.image); }
     |
-    token=< ID > ( ( "==" | "!=" ) token2=< ID > )+ { flag = ((map.get(token.image)[0] == map.get(token2.image)[0]) && (map.get(token.image)[1] == map.get(token2.image)[1])); } 
+    token=< ID > ( ( "==" | "!=" ) token2=< ID > )+ { flag = ((map.get(token.image)[0] == map.get(token2.image)[0]) && (map.get(token.image)[1] == map.get(token2.image)[1])); }
 }
 
 
