@@ -540,11 +540,24 @@ void EqualityExpression() :
 	check()
 }
 
-void check() : {Token token; Token token2;} {
+void check() : {Token token; Token token2; String op;} {
 
-    token=< INT_LIT > ( ( "==" | "!=" ) token2=< INT_LIT > )+ {flag = Integer.parseInt(token.image) == Integer.parseInt(token2.image); }
+    token=< INT_LIT > ( op=equalityOp() token2=< INT_LIT > )+ {
+        switch(op) {
+            case "EQUALS":
+                flag = (Integer.parseInt(token.image) == Integer.parseInt(token2.image));
+                break;
+            case "NOT_EQUALS":
+                flag = (Integer.parseInt(token.image) != Integer.parseInt(token2.image));
+                break;
+        }
+    }
     |
     token=< ID > ( ( "==" | "!=" ) token2=< ID > )+ { flag = ((map.get(token.image)[0] == map.get(token2.image)[0]) && (map.get(token.image)[1] == map.get(token2.image)[1])); }
+}
+
+String equalityOp() : {} {
+     "=="  { return "EQUALS"; }| "!=" { return "NOT_EQUALS"; }
 }
 
 

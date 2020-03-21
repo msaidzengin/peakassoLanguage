@@ -6,9 +6,10 @@ BRUSH-DECLARATION-SECTION : !! Declare brushes
 BRUSH goz = 1 2 PINK, agiz= 2 7 RED, kas= 1 3  , burun= 3 1 YELLOW;
 
 if (1 == 1) burun = 3 3 PINK ; else kas = 1 5 YELLOW ;
-if (1 == 3) agiz = 4 4 PINK ; else kas = 2 2 YELLOW ;
-if (goz == agiz) agiz = 4 4 PINK ; else kas = 2 2 YELLOW ;
-if (goz == goz) agiz = 4 4 PINK ; else kas = 2 2 YELLOW ;
+!! if (1 == 3) agiz = 4 4 PINK ; else kas = 2 2 YELLOW ;
+!! if (1 != 1) burun = 3 3 PINK ; else kas = 1 5 PINK ;
+!! if (goz == agiz) agiz = 4 4 PINK ; else kas = 2 2 YELLOW ;
+!! if (goz == goz) agiz = 4 4 PINK ; else kas = 2 2 YELLOW ;
 
 DRAWING-SECTION : !! Start drawing
 RENEW-BRUSH 'eski goz degeri degeri en=1 boy=2 renk = PINK. Yenisini girin:' goz;
