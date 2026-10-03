@@ -3,6 +3,7 @@ PARSER_BEGIN(PEAKASSO)
 import java.util.*;
 import java.awt.*;
 import javax.swing.*;
+
 public class PEAKASSO {
     private static HashMap<String, String[]> map = new HashMap<String, String[]>();
     private static boolean flag = false, loop_flag = false;
@@ -12,21 +13,58 @@ public class PEAKASSO {
     private static String loopCondition = "";
     private static Scanner sc = new Scanner(System.in);
     private static JFrame frame = new JFrame();
-    public static void main(String[] args) {
 
-        if (args.length==0) {
+    private static boolean brushLoopContinues(int value) {
+        switch (stopOp) {
+            case "LT":
+                return value < stopPoint;
+            case "GT":
+                return value > stopPoint;
+            case "LTE":
+                return value <= stopPoint;
+            case "GTE":
+                return value >= stopPoint;
+            case "NE":
+                return value != stopPoint;
+            case "EQ":
+                return value == stopPoint;
+            default:
+                return false;
+        }
+    }
+
+    private static int applyBrushUpdate(int value, String op, int rightParsed) {
+        switch (op) {
+            case "INCREMENT":
+                return value + 1;
+            case "DECREMENT":
+                return value - 1;
+            case "PLUS_ASSIGN":
+                return value + rightParsed;
+            case "MINUS_ASSIGN":
+                return value - rightParsed;
+            case "ASSIGN":
+                return rightParsed;
+            case "MLTPY_ASSIGN":
+                return value * rightParsed;
+            default:
+                return value;
+        }
+    }
+
+    public static void main(String[] args) {
+        if (args.length == 0) {
             System.out.println("Please enter a file");
             return;
         }
 
         try {
             new PEAKASSO(new java.io.FileInputStream(new java.io.File(args[0]))).PEAKASSO_Language();
-        } catch(java.io.IOException e) {
+        } catch (java.io.IOException e) {
             System.out.println("File not found");
-        } catch(ParseException e){
+        } catch (ParseException e) {
             e.printStackTrace();
         }
-
     }
 }
 
@@ -46,23 +84,45 @@ void CanvasInitSection() : {} {
 }
 
 void CanvasSizeInit() : {Token x; Token y;} {
-     "CONST" "CanvasX" "=" x=<INT_LIT> ";"
-     {int parsed = Integer.parseInt(x.image); if(parsed > 200 || parsed < 5) System.out.println("Bad argument for CanvasX");  x.image = "100";}
-     "CONST" "CanvasY" "=" y=<INT_LIT> ";"
-     {int parsed_y = Integer.parseInt(y.image); if(parsed_y > 200 || parsed_y < 5) System.out.println("Bad argument for CanvasY");  y.image = "100";}
-     { // INITIALIZE FRAME
-         paint = new int[parsed][parsed_y];
-         frame.setLayout(new GridLayout(parsed, parsed_y));
-     }
+    "CONST" "CanvasX" "=" x=<INT_LIT> ";"
+    {
+        int parsed = Integer.parseInt(x.image);
+        if (parsed > 200 || parsed < 5)
+            System.out.println("Bad argument for CanvasX");
+        x.image = "100";
+    }
+    "CONST" "CanvasY" "=" y=<INT_LIT> ";"
+    {
+        int parsed_y = Integer.parseInt(y.image);
+        if (parsed_y > 200 || parsed_y < 5)
+            System.out.println("Bad argument for CanvasY");
+        y.image = "100";
+    }
+    {
+        paint = new int[parsed][parsed_y];
+        frame.setLayout(new GridLayout(parsed, parsed_y));
+    }
 }
 
 void CursorPosInit() : {Token n;} {
     "CursorX" "=" n=<INT_LIT> ";"
-    {if(map.get("CursorX") != null) throw new ParseException("You cannot re-initiate the variable");
-    else {String[] arr = { n.image + "" }; map.put("CursorX", arr); }}
+    {
+        if (map.get("CursorX") != null)
+            throw new ParseException("You cannot re-initiate the variable");
+        else {
+            String[] arr = { n.image + "" };
+            map.put("CursorX", arr);
+        }
+    }
     "CursorY" "=" n=<INT_LIT> ";"
-    {if(map.get("CursorY") != null) throw new ParseException("You cannot re-initiate the variable");
-    else {String[] arr2 = { n.image + "" }; map.put("CursorY", arr2);}}
+    {
+        if (map.get("CursorY") != null)
+            throw new ParseException("You cannot re-initiate the variable");
+        else {
+            String[] arr2 = { n.image + "" };
+            map.put("CursorY", arr2);
+        }
+    }
 }
 
 void BrushDeclarationSection() : {} {
@@ -77,21 +137,25 @@ void BrushList() : {} {
     BrushName() (LOOKAHEAD(2) "," BrushList())*
 }
 
-String BrushName() : {Token id; Token x; Token y; String color; } {
+String BrushName() : {Token id; Token x; Token y; String color;} {
     id=<ID>
     (
-        "=" x=<INT_LIT> y=<INT_LIT> color=color() {
-            String arr[] = { x.image, y.image, color }; map.put(id.image, arr); return id.image;
+        "=" x=<INT_LIT> y=<INT_LIT> color=color()
+        {
+            String arr[] = { x.image, y.image, color };
+            map.put(id.image, arr);
+            return id.image;
         }
-
     )?
-    {return id.image;}
+    { return id.image; }
 }
 
-String IfBrushName() : {Token id; Token x; Token y; String color; } {
-    id=<ID> "=" x=<INT_LIT> y=<INT_LIT> color=color() {
-            String arr[] = { x.image, y.image, color }; return id.image + "," + x.image + "," + y.image + "," + color;
-        }
+String IfBrushName() : {Token id; Token x; Token y; String color;} {
+    id=<ID> "=" x=<INT_LIT> y=<INT_LIT> color=color()
+    {
+        String arr[] = { x.image, y.image, color };
+        return id.image + "," + x.image + "," + y.image + "," + color;
+    }
 }
 
 void DrawingSection() : {} {
@@ -104,19 +168,27 @@ void Statement() : {} {
 
 void RenewStmt() : {String bn; String msg; String x; String y; String color;} {
     "RENEW-BRUSH" msg=get_message() bn=BrushName()
-    {System.out.println(msg); x=sc.next(); y=sc.next(); color=sc.next(); String arr[] = { x, y, color }; map.put(bn, arr);}
+    {
+        System.out.println(msg);
+        x = sc.next();
+        y = sc.next();
+        color = sc.next();
+        String arr[] = { x, y, color };
+        map.put(bn, arr);
+    }
 }
 
 void PaintStmt() : {String bn; int c_x; int c_y; int b_x; int b_y; String color;} {
-    "PAINT-CANVAS" bn=BrushName() {
+    "PAINT-CANVAS" bn=BrushName()
+    {
         c_x = Integer.parseInt(map.get("CursorX")[0]);
         c_y = Integer.parseInt(map.get("CursorY")[0]);
         b_x = Integer.parseInt(map.get(bn)[0]);
         b_y = Integer.parseInt(map.get(bn)[1]);
         color = map.get(bn)[2];
-        for(int ix = c_x - 1; ix < c_x + b_y - 1; ix++) {
-            for(int iy = c_y - 1; iy < c_y + b_x - 1; iy++) {
-                switch(color) {
+        for (int ix = c_x - 1; ix < c_x + b_y - 1; ix++) {
+            for (int iy = c_y - 1; iy < c_y + b_x - 1; iy++) {
+                switch (color) {
                     case "BLACK":
                         paint[iy][ix] = 1;
                         break;
@@ -139,7 +211,7 @@ void PaintStmt() : {String bn; int c_x; int c_y; int b_x; int b_y; String color;
                         paint[iy][ix] = 7;
                         break;
                     default:
-                    // Do nothing. There won't be another color.
+                        break;
                 }
             }
         }
@@ -149,11 +221,10 @@ void PaintStmt() : {String bn; int c_x; int c_y; int b_x; int b_y; String color;
 void ExhibitStmt() : {} {
     "EXHIBIT-CANVAS"
     {
-        for(int x = 0; x < paint.length; x++) {
-            for(int y = 0; y < paint[0].length; y++) {
+        for (int x = 0; x < paint.length; x++) {
+            for (int y = 0; y < paint[0].length; y++) {
                 JButton temp = new JButton();
-
-                switch(paint[x][y]) {
+                switch (paint[x][y]) {
                     case 0:
                         temp.setBackground(Color.WHITE);
                         break;
@@ -179,7 +250,6 @@ void ExhibitStmt() : {} {
                         temp.setBackground(Color.ORANGE);
                         break;
                 }
-
                 temp.setEnabled(false);
                 temp.setOpaque(true);
                 frame.add(temp);
@@ -193,29 +263,37 @@ void ExhibitStmt() : {} {
 void CursorMoveStmt() : {String c; String e;} {
     "MOVE" c=cursor() "TO" e=expression()
     {
-    int dimension = 0;
-    if(c.contains("X")) dimension = 1;
-    String[] terms=e.split(" ");
-    if(terms.length==1) { String arr[] = { terms[0] }; map.put(c,arr); }
-    else switch(terms[1]) {
-        case("PLUS"):
-            int sum = Integer.parseInt(map.get(terms[0])[0])+Integer.parseInt(terms[2]);
-            int size_canvas = dimension == 1 ? paint.length : paint[0].length;
-            if(sum > size_canvas) throw new ParseException("Not a valid argument");
-            String arr[] = { sum + "" };
+        int dimension = 0;
+        if (c.contains("X"))
+            dimension = 1;
+        String[] terms = e.split(" ");
+        if (terms.length == 1) {
+            String arr[] = { terms[0] };
             map.put(c, arr);
-            break;
-        case("MINUS"):
-            sum = Integer.parseInt(map.get(terms[0])[0])-Integer.parseInt(terms[2]);
-            size_canvas = dimension == 1 ? paint.length : paint[0].length;
-            if(sum < 0) throw new ParseException("Not a valid argument");
-            String arr2[] = { sum + "" };
-            map.put(c, arr2);
-    }
+        } else {
+            switch (terms[1]) {
+                case "PLUS":
+                    int sum = Integer.parseInt(map.get(terms[0])[0]) + Integer.parseInt(terms[2]);
+                    int size_canvas = dimension == 1 ? paint.length : paint[0].length;
+                    if (sum > size_canvas)
+                        throw new ParseException("Not a valid argument");
+                    String arr[] = { sum + "" };
+                    map.put(c, arr);
+                    break;
+                case "MINUS":
+                    sum = Integer.parseInt(map.get(terms[0])[0]) - Integer.parseInt(terms[2]);
+                    size_canvas = dimension == 1 ? paint.length : paint[0].length;
+                    if (sum < 0)
+                        throw new ParseException("Not a valid argument");
+                    String arr2[] = { sum + "" };
+                    map.put(c, arr2);
+                    break;
+            }
+        }
     }
 }
 
-void WhileStmt() : {Token left_id; Token right_id;} {
+void WhileStmt() : {} {
     "while" "(" whileExpression() ")"
         loopBodyStatement()
 }
@@ -226,8 +304,8 @@ void loopBodyStatement() : {Token id; Token dimension; String op;} {
         if (loop_flag) {
             String[] values = map.get(id.image);
             int valueToBeChanged = 0;
-            
-            switch(dimension.image) {
+
+            switch (dimension.image) {
                 case "x":
                     valueToBeChanged = Integer.parseInt(values[0]);
                     break;
@@ -236,159 +314,14 @@ void loopBodyStatement() : {Token id; Token dimension; String op;} {
                     break;
             }
 
-			int rightParsed = 0;
-			if (right != null)
-            	rightParsed = Integer.parseInt(right);
+            int rightParsed = 0;
+            if (right != null)
+                rightParsed = Integer.parseInt(right);
 
+            while (brushLoopContinues(valueToBeChanged))
+                valueToBeChanged = applyBrushUpdate(valueToBeChanged, op, rightParsed);
 
-			switch(stopOp) {
-	            case "LT":
-	                while (valueToBeChanged < stopPoint) {
-						switch(op) {
-			                case "INCREMENT":
-			                    valueToBeChanged++;
-			                    break;
-			                case "DECREMENT":
-			                    valueToBeChanged--;
-			                    break;
-			                case "PLUS_ASSIGN":
-			                    valueToBeChanged += rightParsed;
-			                    break;
-			                case "MINUS_ASSIGN":
-			                    valueToBeChanged -= rightParsed;
-			                    break;
-			                case "ASSIGN":
-			                    valueToBeChanged = rightParsed;
-			                    break;
-			                case "MLTPY_ASSIGN":
-			                    valueToBeChanged *= rightParsed;
-			                    break;
-			            }
-	                }
-	                break;
-	            case "GT":
-	                while (valueToBeChanged > stopPoint) {
-						switch(op) {
-			                case "INCREMENT":
-			                    valueToBeChanged++;
-			                    break;
-			                case "DECREMENT":
-			                    valueToBeChanged--;
-			                    break;
-			                case "PLUS_ASSIGN":
-			                    valueToBeChanged += rightParsed;
-			                    break;
-			                case "MINUS_ASSIGN":
-			                    valueToBeChanged -= rightParsed;
-			                    break;
-			                case "ASSIGN":
-			                    valueToBeChanged = rightParsed;
-			                    break;
-			                case "MLTPY_ASSIGN":
-			                    valueToBeChanged *= rightParsed;
-			                    break;
-			            }
-	                }
-	                break;
-	            case "LTE":
-	                while (valueToBeChanged <= stopPoint) {
-						switch(op) {
-			                case "INCREMENT":
-			                    valueToBeChanged++;
-			                    break;
-			                case "DECREMENT":
-			                    valueToBeChanged--;
-			                    break;
-			                case "PLUS_ASSIGN":
-			                    valueToBeChanged += rightParsed;
-			                    break;
-			                case "MINUS_ASSIGN":
-			                    valueToBeChanged -= rightParsed;
-			                    break;
-			                case "ASSIGN":
-			                    valueToBeChanged = rightParsed;
-			                    break;
-			                case "MLTPY_ASSIGN":
-			                    valueToBeChanged *= rightParsed;
-			                    break;
-			            }
-	                }
-	                break;
-	            case "GTE":
-	                while (valueToBeChanged >= stopPoint) {
-						switch(op) {
-			                case "INCREMENT":
-			                    valueToBeChanged++;
-			                    break;
-			                case "DECREMENT":
-			                    valueToBeChanged--;
-			                    break;
-			                case "PLUS_ASSIGN":
-			                    valueToBeChanged += rightParsed;
-			                    break;
-			                case "MINUS_ASSIGN":
-			                    valueToBeChanged -= rightParsed;
-			                    break;
-			                case "ASSIGN":
-			                    valueToBeChanged = rightParsed;
-			                    break;
-			                case "MLTPY_ASSIGN":
-			                    valueToBeChanged *= rightParsed;
-			                    break;
-			            }
-	                }
-	                break;
-	            case "NE":
-	                while (valueToBeChanged != stopPoint) {
-						switch(op) {
-			                case "INCREMENT":
-			                    valueToBeChanged++;
-			                    break;
-			                case "DECREMENT":
-			                    valueToBeChanged--;
-			                    break;
-			                case "PLUS_ASSIGN":
-			                    valueToBeChanged += rightParsed;
-			                    break;
-			                case "MINUS_ASSIGN":
-			                    valueToBeChanged -= rightParsed;
-			                    break;
-			                case "ASSIGN":
-			                    valueToBeChanged = rightParsed;
-			                    break;
-			                case "MLTPY_ASSIGN":
-			                    valueToBeChanged *= rightParsed;
-			                    break;
-			            }
-	                }
-	                break;
-	            case "EQ":
-	                while (valueToBeChanged == stopPoint) {
-						switch(op) {
-			                case "INCREMENT":
-			                    valueToBeChanged++;
-			                    break;
-			                case "DECREMENT":
-			                    valueToBeChanged--;
-			                    break;
-			                case "PLUS_ASSIGN":
-			                    valueToBeChanged += rightParsed;
-			                    break;
-			                case "MINUS_ASSIGN":
-			                    valueToBeChanged -= rightParsed;
-			                    break;
-			                case "ASSIGN":
-			                    valueToBeChanged = rightParsed;
-			                    break;
-			                case "MLTPY_ASSIGN":
-			                    valueToBeChanged *= rightParsed;
-			                    break;
-			            }
-	                }
-	                break;
-	        }
-	        
-            switch(dimension.image) {
+            switch (dimension.image) {
                 case "x":
                     values = new String[] {valueToBeChanged + "", values[1], values[2]};
                     map.put(id.image, values);
@@ -407,7 +340,12 @@ void intLit() : {Token intLiteral;} {
 }
 
 String binaryOperator() : {} {
-    "++" { return "INCREMENT"; } | "--" { return "DECREMENT"; } | "+=" { return "PLUS_ASSIGN"; } | "-=" { return "MINUS_ASSIGN"; }  | "=" { return "ASSIGN"; } | "*="  { return "MLTPY_ASSIGN"; }
+    "++" { return "INCREMENT"; }
+    | "--" { return "DECREMENT"; }
+    | "+=" { return "PLUS_ASSIGN"; }
+    | "-=" { return "MINUS_ASSIGN"; }
+    | "=" { return "ASSIGN"; }
+    | "*=" { return "MLTPY_ASSIGN"; }
 }
 
 String cursor() : {} {
@@ -415,9 +353,8 @@ String cursor() : {} {
 }
 
 String expression() : {String t; String e; String o = ""; String t2;} {
-    t=term()  ( LOOKAHEAD(2) (e=expression() | o=operation()) t2=term() {return t + " " + o + " " + t2;})*
+    t=term() (LOOKAHEAD(2) (e=expression() | o=operation()) t2=term() { return t + " " + o + " " + t2; })*
     { return t; }
-
 }
 
 String color() : {Token color;} {
@@ -429,29 +366,32 @@ String operation() : {} {
 }
 
 String term() : {String s;} {
-    s=factor() { return s;}
+    s=factor() { return s; }
 }
 
 String factor() : {Token token; String c;} {
-    token = < INT_LIT > { return token.image; } | c=cursor() {return c; }
-    | "CanvasX"  { return "CanvasX"; } | "CanvasY" { return "CanvasY"; }
+    token = <INT_LIT> { return token.image; }
+    | c=cursor() { return c; }
+    | "CanvasX" { return "CanvasX"; }
+    | "CanvasY" { return "CanvasY"; }
     | "(" c=expression() ")" { return c; }
 }
 
-String get_message():{Token token;} {
+String get_message(): {Token token;} {
     token = <MESSAGE>
-    {return token.image.substring(1, token.image.length()-1);}
+    { return token.image.substring(1, token.image.length() - 1); }
 }
 
 void whileExpression() : {} {
-     (LOOKAHEAD(2) ConditionalExpression())? (UnaryExpression())?
+    (LOOKAHEAD(2) ConditionalExpression())? (UnaryExpression())?
 }
 
 void UnaryExpression() : {Token id; Token dimension; Token right; String op;} {
-    id=<ID> "." dimension=<ID> op=unaryOperator() right=<INT_LIT> {
+    id=<ID> "." dimension=<ID> op=unaryOperator() right=<INT_LIT>
+    {
         String[] values = map.get(id.image);
         int valueToBeChecked = 0;
-        switch(dimension.image) {
+        switch (dimension.image) {
             case "x":
                 valueToBeChecked = Integer.parseInt(values[0]);
                 break;
@@ -462,88 +402,85 @@ void UnaryExpression() : {Token id; Token dimension; Token right; String op;} {
         int parsedRight = Integer.parseInt(right.image);
         stopPoint = parsedRight;
         stopOp = op;
-        switch(op) {
+        switch (op) {
             case "LT":
-                if(valueToBeChecked < parsedRight) loop_flag = true;
+                if (valueToBeChecked < parsedRight)
+                    loop_flag = true;
                 break;
             case "GT":
-                if(valueToBeChecked > parsedRight) loop_flag = true;
+                if (valueToBeChecked > parsedRight)
+                    loop_flag = true;
                 break;
             case "LTE":
-                if(valueToBeChecked <= parsedRight) loop_flag = true;
+                if (valueToBeChecked <= parsedRight)
+                    loop_flag = true;
                 break;
             case "GTE":
-                if(valueToBeChecked >= parsedRight) loop_flag = true;
+                if (valueToBeChecked >= parsedRight)
+                    loop_flag = true;
                 break;
             case "NE":
-                if(valueToBeChecked != parsedRight) loop_flag = true;
+                if (valueToBeChecked != parsedRight)
+                    loop_flag = true;
                 break;
             case "EQ":
-                if(valueToBeChecked == parsedRight) loop_flag = true;
+                if (valueToBeChecked == parsedRight)
+                    loop_flag = true;
                 break;
         }
     }
 }
 
 String unaryOperator() : {} {
-    "<" { return "LT"; } | ">" { return "GT"; } | "<=" { return "LTE"; } | ">=" { return "GTE"; } | "!=" { return "NE"; } | "==" { return "EQ"; }
+    "<" { return "LT"; }
+    | ">" { return "GT"; }
+    | "<=" { return "LTE"; }
+    | ">=" { return "GTE"; }
+    | "!=" { return "NE"; }
+    | "==" { return "EQ"; }
 }
 
-void IfElseStatement() : {String b1, b2;}
-{
-  "if" "(" ConditionalExpression() ")" b1=IfBrushName() ";" "else" b2=IfBrushName() ";"
-  {
-    if (flag) {
-      String arr[] = b1.split(",");
-      map.put(arr[0], new String[] { arr[1], arr[2], arr[3] });
+void IfElseStatement() : {String b1, b2;} {
+    "if" "(" ConditionalExpression() ")" b1=IfBrushName() ";" "else" b2=IfBrushName() ";"
+    {
+        if (flag) {
+            String arr[] = b1.split(",");
+            map.put(arr[0], new String[] { arr[1], arr[2], arr[3] });
+        } else {
+            String arr[] = b2.split(",");
+            map.put(arr[0], new String[] { arr[1], arr[2], arr[3] });
+        }
     }
-    else {
-      String arr[] = b2.split(",");
-      map.put(arr[0], new String[] { arr[1], arr[2], arr[3] });
-    }
-
-  }
 }
 
-void ConditionalExpression() : {}
-{
-  ConditionalAndExpression() ( "||" ConditionalAndExpression() )*
+void ConditionalExpression() : {} {
+    ConditionalAndExpression() ("||" ConditionalAndExpression())*
 }
 
-void ConditionalAndExpression() :
-{}
-{
-  InclusiveOrExpression() ( "&&" InclusiveOrExpression() )*
+void ConditionalAndExpression() : {} {
+    InclusiveOrExpression() ("&&" InclusiveOrExpression())*
 }
 
-void InclusiveOrExpression() :
-{}
-{
-  ExclusiveOrExpression() ( "|" ExclusiveOrExpression() )*
+void InclusiveOrExpression() : {} {
+    ExclusiveOrExpression() ("|" ExclusiveOrExpression())*
 }
 
-void ExclusiveOrExpression() :
-{}
-{
-  AndExpression() ( "^" AndExpression() )*
+void ExclusiveOrExpression() : {} {
+    AndExpression() ("^" AndExpression())*
 }
 
-void AndExpression() :
-{}
-{
-  EqualityExpression() ( "&" EqualityExpression() )*
+void AndExpression() : {} {
+    EqualityExpression() ("&" EqualityExpression())*
 }
 
-void EqualityExpression() :
-{}
-{
-	check()
+void EqualityExpression() : {} {
+    check()
 }
 
 void check() : {Token token; Token token2; String op;} {
-
-    token=< INT_LIT > ( op=equalityOp() token2=< INT_LIT > )+ {
-        switch(op) {
+    token=<INT_LIT> (op=equalityOp() token2=<INT_LIT>)+
+    {
+        switch (op) {
             case "EQUALS":
                 flag = (Integer.parseInt(token.image) == Integer.parseInt(token2.image));
                 break;
@@ -553,13 +490,16 @@ void check() : {Token token; Token token2; String op;} {
         }
     }
     |
-    token=< ID > ( ( "==" | "!=" ) token2=< ID > )+ { flag = ((map.get(token.image)[0] == map.get(token2.image)[0]) && (map.get(token.image)[1] == map.get(token2.image)[1])); }
+    token=<ID> (("==" | "!=") token2=<ID>)+
+    {
+        flag = (map.get(token.image)[0] == map.get(token2.image)[0])
+            && (map.get(token.image)[1] == map.get(token2.image)[1]);
+    }
 }
 
 String equalityOp() : {} {
-     "=="  { return "EQUALS"; }| "!=" { return "NOT_EQUALS"; }
+    "==" { return "EQUALS"; } | "!=" { return "NOT_EQUALS"; }
 }
-
 
 TOKEN : {
     < COLOR: ("BLACK") | ("RED") | ("GREEN") | ("BLUE") | ("YELLOW") | ("PINK") | ("ORANGE") >

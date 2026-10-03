@@ -1,0 +1,4 @@
+*.class
+javacc.jar
+*.o
+composePeakasso/peakasso
